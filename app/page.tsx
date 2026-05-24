@@ -1,5 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase Client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 type StatusData = {
   last_update: string;
@@ -13,16 +19,21 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/trading_status.json');
-        const json = await response.json();
-        setData(json);
+        const { data, error } = await supabase
+          .from('trading_status')
+          .select('*')
+          .eq('id', 1)
+          .single();
+
+        if (error) throw error;
+        setData(data);
       } catch (err) {
-        console.error("Failed to fetch status:", err);
+        console.error("Failed to fetch status from Supabase:", err);
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Auto-refresh 5 detik
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
